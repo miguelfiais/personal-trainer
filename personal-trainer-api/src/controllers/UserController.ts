@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { prisma } from '../lib/prisma'
 import { UserType } from '@prisma/client'
 import { findUser } from '../repositorys/userRepository'
+import { hash } from 'bcrypt'
 
 export const createPersonal = async (req: Request, res: Response): Promise<Response> => {
   try {
@@ -19,13 +20,15 @@ export const createPersonal = async (req: Request, res: Response): Promise<Respo
       return res.status(400).json({ error: 'User already exists' })
     }
 
+    const passwordHash = await hash(password, 10)
+
     const newPersonal = await prisma.personal.create({
       data: {
         user: {
           create: {
             email,
             name,
-            password,
+            password: passwordHash,
             tipo: UserType.PERSONAL_TRAINER
           }
         }
