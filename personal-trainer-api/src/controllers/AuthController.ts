@@ -2,6 +2,7 @@ import { type Request, type Response } from 'express'
 import { z } from 'zod'
 import { findUser } from '../repositorys/userRepository'
 import { compare } from 'bcrypt'
+import { sign } from 'jsonwebtoken'
 
 export const signIn = async (req: Request, res: Response): Promise<Response> => {
   try {
@@ -21,8 +22,9 @@ export const signIn = async (req: Request, res: Response): Promise<Response> => 
     if (!validPassword) {
       return res.status(400).json({ error: 'Check your email and password' })
     }
+    const userSession = { ...user, token: sign({ id: user.id }, 'secret', { expiresIn: '2d' }) }
 
-    return res.status(200).json(user)
+    return res.status(200).json(userSession)
   } catch (error) {
     return res.status(500).json({ error })
   }
