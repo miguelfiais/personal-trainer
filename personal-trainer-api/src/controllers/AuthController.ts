@@ -12,7 +12,7 @@ export const signIn = async (req: Request, res: Response): Promise<Response> => 
     })
     const { email, password } = bodySchema.parse(req.body)
 
-    const user = await findUser(email)
+    const user = await findUser({ email })
 
     if (user === null) {
       return res.status(400).json({ error: 'Check your email and password' })
