@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { prisma } from '../lib/prisma'
 import { UserType } from '@prisma/client'
 import { findUser } from '../repositorys/userRepository'
-import { hash } from 'bcrypt'
+import { compare, hash } from 'bcrypt'
 
 export const createPersonal = async (req: Request, res: Response): Promise<Response> => {
   try {
@@ -79,6 +79,43 @@ export const createAluno = async (req: Request, res: Response): Promise<Response
       }
     })
     return res.status(201).json(newAluno)
+  } catch (error) {
+    return res.status(500).json({ error })
+  }
+}
+
+export const changeUserPassword = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const id = req.userId
+    const bodySchema = z.object({
+      currentPassword: z.string().min(6),
+      password: z.string().min(6)
+
+    })
+    const { password, currentPassword } = bodySchema.parse(req.body)
+
+    const user = await findUser({ id })
+    if (user) {
+      const checkPassword = await compare(currentPassword, user.password)
+      if (!checkPassword) {
+        return res.status(400).json({ error: 'Check your current password' })
+      }
+      const validPassword = await compare(password, user.password)
+      if (validPassword) {
+        return res.status(409).json({ error: 'Password same as previous' })
+      }
+    }
+
+    const passwordHash = await hash(password, 10)
+
+    const newUser = await prisma.user.update({
+      where: {
+        id
+      },
+      data: { password: passwordHash }
+    })
+
+    return res.status(200).json(newUser)
   } catch (error) {
     return res.status(500).json({ error })
   }
