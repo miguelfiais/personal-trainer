@@ -120,3 +120,23 @@ export const changeUserPassword = async (req: Request, res: Response): Promise<R
     return res.status(500).json({ error })
   }
 }
+
+export const getAlunos = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const id = req.userId
+    const isPersonal = await findUser({ id })
+    if (isPersonal?.tipo === 'ALUNO') {
+      return res.status(401).json({ error: 'Unauthorized' })
+    }
+    const myAlunos = await prisma.aluno.findMany({
+      where: {
+        personal: {
+          userId: id
+        }
+      }
+    })
+    return res.status(200).json(myAlunos)
+  } catch (error) {
+    return res.status(500).json({ error })
+  }
+}
